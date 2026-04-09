@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: truthguard-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+
