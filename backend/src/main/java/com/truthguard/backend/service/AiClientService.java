@@ -15,14 +15,12 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 public class AiClientService {
     private final WebClient webClient;
 
-    @SuppressWarnings("null")
     public AiClientService(AppProperties properties) {
         this.webClient = WebClient.builder()
                 .baseUrl(properties.getAiService().getBaseUrl())
                 .build();
     }
 
-    @SuppressWarnings("null")
     public AiAnalyzeResponse analyze(AiAnalyzeRequest request, int timeoutSeconds) {
         try {
             return webClient.post()

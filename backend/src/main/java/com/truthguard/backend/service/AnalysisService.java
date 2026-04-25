@@ -37,7 +37,6 @@ public class AnalysisService {
         this.appProperties = appProperties;
     }
 
-    @SuppressWarnings("null")
     public AnalysisResponse analyze(User user, String text, String url, MultipartFile file) {
         if ((text == null || text.isBlank()) && (url == null || url.isBlank()) && (file == null || file.isEmpty())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Provide text, url, or file");
@@ -94,7 +93,6 @@ public class AnalysisService {
         return mapResponse(record);
     }
 
-    @SuppressWarnings("null")
     public void submitFeedback(User user, FeedbackRequest request) {
         feedbackRepository.save(FeedbackRecord.builder()
                 .analysisId(request.analysisId())

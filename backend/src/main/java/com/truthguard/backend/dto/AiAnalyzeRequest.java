@@ -1,7 +1,5 @@
 package com.truthguard.backend.dto;
 
-import java.util.List;
-
 public record AiAnalyzeRequest(
         String text,
         String url,
