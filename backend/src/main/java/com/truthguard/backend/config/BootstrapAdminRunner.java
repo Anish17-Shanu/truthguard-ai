@@ -23,6 +23,7 @@ public class BootstrapAdminRunner implements CommandLineRunner {
     }
 
     @Override
+    @SuppressWarnings("null")
     public void run(String... args) {
         String email = properties.getBootstrap().getAdminEmail();
         String password = properties.getBootstrap().getAdminPassword();
