@@ -2,6 +2,7 @@
 node_modules/
 .next/
 dist/
+*.tsbuildinfo
 
 # Java
 target/
@@ -11,7 +12,21 @@ target/
 __pycache__/
 .pytest_cache/
 .venv/
+.venv-train/
 ai-service/pytest-cache-files-*/
+
+# Datasets and training outputs (never commit public dataset copies)
+ai-service/training/data/
+ai-service/training/runs/
+ai-service/artifacts/model/
+ai-service/artifacts/model.onnx
+ai-service/artifacts/model-fp32.onnx
+ai-service/artifacts/model.zip
+ai-service/artifacts/tokenizer.json
+ai-service/artifacts/tokenizer_config.json
+ai-service/artifacts/special_tokens_map.json
+ai-service/artifacts/manifest.json
+ai-service/artifacts/evaluation.json
 
 # Env
 .env

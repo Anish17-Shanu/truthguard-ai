@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -14,6 +15,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "logs")
+@CompoundIndex(name = "log_user_time", def = "{'userId': 1, 'timestamp': -1}")
+@CompoundIndex(name = "log_time", def = "{'timestamp': -1}")
 public class AuditLog {
     @Id
     private String id;

@@ -2,15 +2,16 @@ package com.truthguard.backend.controller;
 
 import com.truthguard.backend.dto.AnalysisResponse;
 import com.truthguard.backend.dto.FeedbackRequest;
+import com.truthguard.backend.dto.PagedResponse;
 import com.truthguard.backend.model.User;
 import com.truthguard.backend.service.AnalysisService;
 import com.truthguard.backend.service.AuditLogService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,13 +45,24 @@ public class AnalysisController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<AnalysisResponse>> history(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(analysisService.history(user.getId()));
+    public ResponseEntity<PagedResponse<AnalysisResponse>> history(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(analysisService.history(user.getId(), page, size));
     }
 
     @GetMapping("/history/{id}")
     public ResponseEntity<AnalysisResponse> historyItem(@AuthenticationPrincipal User user, @PathVariable String id) {
         return ResponseEntity.ok(analysisService.byId(user.getId(), id));
+    }
+
+    @DeleteMapping("/history/{id}")
+    public ResponseEntity<Void> deleteHistoryItem(@AuthenticationPrincipal User user, @PathVariable String id) {
+        analysisService.deleteAnalysis(user.getId(), id);
+        auditLogService.log(user.getId(), "DELETE_ANALYSIS", "/history/" + id, 200, Map.of());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/feedback")
@@ -63,4 +75,3 @@ public class AnalysisController {
         return ResponseEntity.ok(Map.of("status", "feedback recorded"));
     }
 }
-

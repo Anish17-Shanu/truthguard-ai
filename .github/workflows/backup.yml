@@ -1,0 +1,44 @@
+name: Database backup
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    name: mongodump to artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check configuration
+        id: check
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          if [ -z "$MONGODB_URI" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "MONGODB_URI secret is not set; skipping backup." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dump database
+        if: steps.check.outputs.configured == 'true'
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          docker run --rm -v "$PWD:/backup" mongo:7 \
+            mongodump --uri="$MONGODB_URI" --gzip --archive=/backup/truthguard.archive.gz
+          ls -lh truthguard.archive.gz
+
+      - name: Upload backup
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mongodb-backup-${{ github.run_id }}
+          path: truthguard.archive.gz
+          retention-days: 30
+          if-no-files-found: error

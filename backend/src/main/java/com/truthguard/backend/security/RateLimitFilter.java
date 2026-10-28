@@ -16,6 +16,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+    private static final int MAX_ENTRIES = 20_000;
+
     private final int maxRequestsPerMinute;
     private final Map<String, RateWindow> counters = new ConcurrentHashMap<>();
 
@@ -26,14 +28,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if (request.getRequestURI().startsWith("/health")) {
+        String path = request.getRequestURI();
+        if (path.startsWith("/health") || path.startsWith("/ready") || path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String key = request.getRemoteAddr();
-        RateWindow window = counters.computeIfAbsent(key, ignored -> new RateWindow(Instant.now().getEpochSecond()));
         long currentMinute = Instant.now().getEpochSecond() / 60;
+        evictIfNeeded(currentMinute);
+
+        String key = request.getRemoteAddr();
+        RateWindow window = counters.computeIfAbsent(key, ignored -> new RateWindow(currentMinute));
 
         synchronized (window) {
             if (window.minuteEpoch != currentMinute) {
@@ -43,13 +48,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
             int current = window.counter.incrementAndGet();
             if (current > maxRequestsPerMinute) {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                response.setHeader("Retry-After", "60");
                 response.setContentType("application/json");
-                response.getWriter().write("{\"error\":\"Rate limit exceeded\"}");
+                response.getWriter().write("{\"code\":\"rate_limited\",\"message\":\"Rate limit exceeded\"}");
                 return;
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void evictIfNeeded(long currentMinute) {
+        if (counters.size() < MAX_ENTRIES) {
+            return;
+        }
+        counters.entrySet().removeIf(entry -> entry.getValue().minuteEpoch < currentMinute - 1);
     }
 
     private static class RateWindow {
@@ -61,4 +74,3 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
     }
 }
-

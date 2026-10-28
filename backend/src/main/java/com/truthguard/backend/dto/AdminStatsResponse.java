@@ -8,5 +8,8 @@ public record AdminStatsResponse(
         long realCount,
         long propagandaCount,
         long users,
+        long feedbackCount,
+        long scansToday,
+        String activeModelVersion,
         Map<String, Long> trendsByDate
 ) {}

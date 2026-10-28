@@ -1,35 +1,52 @@
-export type AuthPayload = {
-  accessToken: string;
-  expiresIn: number;
-  userId: string;
-  fullName: string;
-  email: string;
-  role: "USER" | "ADMIN";
-};
+import type { ApiErrorBody } from "@/lib/types";
 
-const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8080";
+export class ApiError extends Error {
+  status: number;
+  details?: Record<string, string>;
 
-function authHeader() {
-  if (typeof window === "undefined") return {};
-  const token = localStorage.getItem("tg_token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  constructor(message: string, status: number, details?: Record<string, string>) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
+  }
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers ?? {});
-  const auth = authHeader();
-  if (auth.Authorization) {
-    headers.set("Authorization", auth.Authorization);
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      ...init,
+      headers,
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+  } catch {
+    throw new ApiError("Network error. Check your connection and try again.", 0);
+  }
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? `API error ${response.status}`);
+    const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
+    throw new ApiError(body.message ?? `Request failed (${response.status})`, response.status, body.details);
   }
-  return response.json() as Promise<T>;
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  return (await response.json()) as T;
+}
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Something went wrong";
 }

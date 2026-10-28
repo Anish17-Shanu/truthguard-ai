@@ -5,5 +5,5 @@ import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ModelMetadataRepository extends MongoRepository<ModelMetadata, String> {
-    Optional<ModelMetadata> findFirstByActiveTrue();
+    Optional<ModelMetadata> findFirstByActiveTrueOrderByTrainedAtDesc();
 }

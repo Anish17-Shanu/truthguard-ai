@@ -1,20 +1,15 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { getSessionUser } from "@/lib/backend";
 
-export default function PrivateLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    const token = localStorage.getItem("tg_token");
-    if (!token) {
-      router.push("/login");
-    }
-  }, [router]);
+export default async function PrivateLayout({ children }: { children: React.ReactNode }) {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell user={user}>{children}</AppShell>;
 }
-

@@ -1,0 +1,15 @@
+title = "TruthGuard AI secret scanning"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented development-only placeholders in example files"
+paths = [
+  '''(^|/)\.env\.example$''',
+]
+regexes = [
+  # Removed from the current tree, but present in historical docs commits.
+  '''VGhpc0lzQVNlY3VyZUJhc2U2NEpXVFNlY3JldEtleUZvclRydXRoR3VhcmRBSTEyMw==''',
+  '''StrongPass123''',
+]

@@ -5,6 +5,8 @@ import java.util.List;
 
 public record AnalysisResponse(
         String analysisId,
+        String sourceType,
+        String inputSnippet,
         String label,
         double confidence,
         double biasScore,
@@ -13,5 +15,6 @@ public record AnalysisResponse(
         List<String> highlightedText,
         List<String> suspiciousPhrases,
         String modelVersion,
+        String classifierMode,
         Instant createdAt
 ) {}

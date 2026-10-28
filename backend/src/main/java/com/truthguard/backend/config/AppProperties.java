@@ -13,6 +13,7 @@ public class AppProperties {
     private AiService aiService = new AiService();
     private Cors cors = new Cors();
     private RateLimit rateLimit = new RateLimit();
+    private Retention retention = new Retention();
     private Bootstrap bootstrap = new Bootstrap();
 
     @Data
@@ -25,6 +26,7 @@ public class AppProperties {
     public static class AiService {
         private String baseUrl;
         private int timeoutSeconds;
+        private String internalToken;
     }
 
     @Data
@@ -32,13 +34,24 @@ public class AppProperties {
         private String allowedOrigins;
 
         public List<String> originsList() {
-            return List.of(allowedOrigins.split(","));
+            return java.util.Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(value -> !value.isEmpty())
+                    .toList();
         }
     }
 
     @Data
     public static class RateLimit {
         private int maxRequestsPerMinute;
+        private int maxAnalysesPerMinute;
+        private int maxAnalysesPerDay;
+    }
+
+    @Data
+    public static class Retention {
+        private int analysesDays;
+        private int auditDays;
     }
 
     @Data

@@ -10,5 +10,7 @@ public record AiAnalyzeResponse(
         String language,
         List<String> highlighted_text,
         List<String> suspicious_phrases,
-        String model_version
+        String model_version,
+        String classifier_mode,
+        String content_hash
 ) {}

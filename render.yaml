@@ -1,0 +1,84 @@
+# Render Blueprint for TruthGuard AI (free tier).
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> select this repository.
+# Render prompts for every `sync: false` value. Fill them in this order:
+#
+#   1. AI_INTERNAL_TOKEN  - any random string of 24+ chars (shared by both services)
+#   2. JWT_SECRET         - `openssl rand -base64 48`
+#   3. MONGODB_URI        - Atlas M0 connection string (same database for both services)
+#   4. MODEL_ARTIFACT_URL / MODEL_ARTIFACT_SHA256
+#                           - from `python training/export_onnx.py`; the AI service
+#                             refuses to start in production without a valid artifact
+#   5. AI_SERVICE_BASE_URL, CORS_ALLOWED_ORIGINS
+#                           - the public https URLs Render assigns after creation
+#
+# The frontend deploys to Vercel (see docs/DEPLOYMENT.md), so this blueprint
+# covers only the backend and AI service. Free web services sleep after
+# inactivity and share the account's 750 instance-hours/month.
+
+envVarGroups:
+  - name: truthguard-internal-auth
+    envVars:
+      - key: AI_INTERNAL_TOKEN
+        sync: false
+
+services:
+  - type: web
+    name: truthguard-ai-service
+    runtime: docker
+    plan: free
+    dockerContext: ./ai-service
+    dockerfilePath: ./ai-service/Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - fromGroup: truthguard-internal-auth
+      - key: APP_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: truthguard
+      - key: MODEL_ARTIFACT_URL
+        sync: false
+      - key: MODEL_ARTIFACT_SHA256
+        sync: false
+      - key: MODEL_ARTIFACT_MAX_MB
+        value: "300"
+      - key: RETRAIN_ENABLED
+        value: "false"
+      - key: ALLOW_HEURISTIC_FALLBACK
+        value: "false"
+
+  - type: web
+    name: truthguard-backend
+    runtime: docker
+    plan: free
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - fromGroup: truthguard-internal-auth
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: AI_SERVICE_BASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: ANALYSES_RETENTION_DAYS
+        value: "365"
+      - key: AUDIT_RETENTION_DAYS
+        value: "180"
+      - key: MAX_ANALYSES_PER_MINUTE
+        value: "30"
+      - key: MAX_ANALYSES_PER_DAY
+        value: "200"
